@@ -131,22 +131,18 @@ class CNNFeatureExtractor(nn.Module):
             plt.figure(figsize=(15, 3))
             for i in range(num_channels):
                 plt.subplot(1, num_channels, i + 1)
-                plt.imshow(act[i], cmap='viridis')
+                plt.imshow(act[i], cmap='gray')
                 plt.axis('off')
             plt.suptitle(f'Layer: {name}', fontsize=14)
             plt.show()
 class ClassicalFeatureExtractor(nn.Module):
-    """
-    Classical feature extractor backbone using HOG + Canny + other features.
-    Outputs a flattened tensor ready for fully connected layers.
-    """
     def __init__(self, config : Config):
         super().__init__()
         self.img_size = config.img_size  # (H, W)
         self.hog_orientations = config.hog_orientations
         self.num_downsample = config.conv_hidden_dim
         self.config = config
-
+        self.feature_names = ['HoG','Canny Edge','Harris Corner','Shi-Tomasi corners','LBP','Gabor Filters']
         self.device = 'cpu'
 
     def get_device(self):
@@ -236,7 +232,8 @@ class ClassicalFeatureExtractor(nn.Module):
         for img in x:
             if img.ndim != 3 or img.shape[2] != 3:
                 img = np.repeat(img[:, :, None], 3, axis=2)
-            batch_features.append(self.extract_features(img))
+            feat = self.extract_features(img)
+            batch_features.append(feat)
         batch_features = np.stack(batch_features, axis=0)
         return torch.from_numpy(batch_features).float().to(self.get_device())
     
@@ -261,7 +258,7 @@ class ClassicalFeatureExtractor(nn.Module):
         for c in range(num_channels):
             plt.subplot(1, ncols, col_idx)
             plt.imshow(feature_stack[:, :, c], cmap='gray')
-            plt.title(f"Feature {c}")
+            plt.title(f"Feature {self.feature_names[c]}")
             plt.axis("off")
             col_idx += 1
 

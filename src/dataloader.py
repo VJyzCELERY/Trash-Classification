@@ -4,13 +4,13 @@ import os
 import numpy as np
 import cv2
 
-def waste_collate_fn(batch):
+def collate_fn(batch):
     imgs = [img for img, _ in batch]
     labels = torch.tensor([label for _, label in batch])
     return imgs, labels
 
 
-class RealWasteDataset(Dataset):
+class ImageDataset(Dataset):
     def __init__(self,root_path : str,img_size=(256,256)):
         classes = os.listdir(root_path)
         self.img_size = img_size

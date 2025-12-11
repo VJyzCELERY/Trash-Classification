@@ -1,5 +1,5 @@
 from src.model import Classifier
-from src.dataloader import RealWasteDataset,waste_collate_fn
+from src.dataloader import ImageDataset,collate_fn
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn.functional as F
@@ -11,11 +11,11 @@ import numpy as np
 import torch.nn as nn
 
 class RealWasteTrainer:
-    def __init__(self,model : Classifier,train_set : RealWasteDataset,val_set : RealWasteDataset = None, batch_size=32,lr = 1e-3,device='cpu'):
-        self.train_loader = DataLoader(train_set,batch_size,shuffle=True,collate_fn=waste_collate_fn)
+    def __init__(self,model : Classifier,train_set : ImageDataset,val_set : ImageDataset = None, batch_size=32,lr = 1e-3,device='cpu'):
+        self.train_loader = DataLoader(train_set,batch_size,shuffle=True,collate_fn=collate_fn)
         self.device = device
         if val_set is not None:
-            self.val_loader = DataLoader(val_set,batch_size,shuffle=False,collate_fn=waste_collate_fn)
+            self.val_loader = DataLoader(val_set,batch_size,shuffle=False,collate_fn=collate_fn)
         else:
             self.val_loader=None
         self.class_names = model.classes
@@ -23,8 +23,8 @@ class RealWasteTrainer:
         self.lr = lr
         self.optim = optim.Adam(model.parameters(),lr=lr)
         self.criterion = nn.CrossEntropyLoss()
+    
     def visualize_batch(self, imgs, preds, labels, class_names=None, max_samples=4):
-        # Convert list of images to tensor if needed
         if isinstance(imgs, list):
             imgs = np.stack(imgs, axis=0)
             imgs = torch.from_numpy(imgs).permute(0, 3, 1, 2).float()  # (B,H,W,C) -> (B,C,H,W)
@@ -51,7 +51,6 @@ class RealWasteTrainer:
 
 
     def train_one_epoch(self):
-        """Train the model for a single epoch with tqdm."""
         self.model.train()
         total_loss = 0
         train_pbar = tqdm(self.train_loader, desc="Training",leave=False)
@@ -96,7 +95,6 @@ class RealWasteTrainer:
         return train_losses,train_accuracies,val_losses,val_accuracies
 
     def validate(self,epoch, visualize=False):
-        """Validate the model for a single epoch with tqdm."""
         if self.val_loader is None:
             return
 
